@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 import styles from './searchForm.module.css';
 
 class SearchForm extends Component {
@@ -22,5 +23,10 @@ class SearchForm extends Component {
     );
   }
 }
-
+SearchForm.defaultProps = {
+  onSubmit: ()=>{},
+}
+SearchForm.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+}
 export default SearchForm;

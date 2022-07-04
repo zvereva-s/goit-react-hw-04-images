@@ -1,11 +1,11 @@
 import { Component } from 'react';
 import { createPortal } from 'react-dom';
+import PropTypes from 'prop-types';
 import styles from './modal.module.css';
 
 const modalEl = document.getElementById('modal-root');
 
 class Modal extends Component {
-
   componentDidMount() {
         document.addEventListener("keydown", this.handleClose);
     }
@@ -35,6 +35,14 @@ class Modal extends Component {
         </div>, modalEl)
     );
   }
+}
+
+Modal.defaultProps = {
+  closeModal: ()=>{},
+}
+Modal.propTypes = {
+  closeModal: PropTypes.func.isRequired,
+  children: PropTypes.node,
 }
 
 export default Modal;
