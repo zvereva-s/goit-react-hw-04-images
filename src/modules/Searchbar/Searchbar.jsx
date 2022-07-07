@@ -11,25 +11,19 @@ import { getImagesList} from 'shared/services/api/getImages';
 class Searchbar extends Component {
   state = {
     items: [],
-    q: 'random',
+    query: '',
     page: 1,
     totalPages: 0,
     showModal: false,
-    modalContent:[],
+    modalContent:{},
     error: false,
     loading: false,
   };
 
-  componentDidMount() {
-    this.fetchProductsList();
-  }
   componentDidUpdate(prevProps, prevState) {
-    const { page, q} = this.state;
-    if (q !== prevState.q) {
+    const { page, query} = this.state;
+    if (query !== prevState.query) {
       this.fetchProductsList();
-      this.setState({
-        page: 1,
-      });
     }
     if (page > prevState.page) {
       this.fetchProductsList();
@@ -37,13 +31,13 @@ class Searchbar extends Component {
   }
 
   async fetchProductsList() {
-    const { q, page } = this.state;
+    const { query, page } = this.state;
     this.setState({
       loading: true,
       error: false,
     });
     try {
-      const { data } = await getImagesList(q, page);
+      const { data } = await getImagesList(query, page);
       const { totalHits, hits } = data;
 
       this.setState(prevState => {
@@ -67,23 +61,17 @@ class Searchbar extends Component {
     }
   }
 
-  handleSubmit = e => {
-    e.preventDefault();
-    const { target } = e;
-    const {
-      elements: { query },
-    } = target;
-
+  setQuery = ({ query }) => {
     this.setState(prevState => {
-      if (prevState.q !== query.value) {
+      if (prevState.query !== query) {
         return {
-          q: query.value,
+          query,
           page: 1,
           items: [],
         };
       }
     });
-  };
+  }
 
   loadMore = () => {
     this.setState(({ page }) => {
@@ -93,11 +81,11 @@ class Searchbar extends Component {
     });
   };
 
-  getImgId = (id) => {
-    const { items } = this.state;
+  getImgObj = ({largeImageURL, tags}) => {
+    
     this.setState({
       showModal: true,
-      modalContent: items.filter(el => el.id === id)[0],
+      modalContent: {largeImageURL, tags},
     })
   }
 
@@ -110,21 +98,22 @@ class Searchbar extends Component {
   render() {
     const { items, error, loading, showModal, modalContent, totalPages, page } =
       this.state;
-    const { closeModal, handleSubmit,  loadMore } = this;
+    const { largeImageURL, tags } = modalContent;
+    const { closeModal, setQuery,  loadMore, getImgObj } = this;
 
     return (
       <>
         {showModal && 
           <Modal closeModal={closeModal}>
-            <img src={modalContent.largeImageURL} alt={modalContent.tags} width="900"/>
+            <img src={largeImageURL} alt={tags} width="900"/>
           </Modal>
         }
 
-        <SearchForm onSubmit={handleSubmit} />
+        <SearchForm onSubmit={setQuery} />
         {error && <p>Не удалось загрузить посты</p>}
         {loading && <Loader />}
 
-        <ImageGallery items={items} onClick={this.getImgId} />
+        <ImageGallery items={items} onClick={getImgObj} />
         {!loading && items.length >= 12 && page * 12 <= totalPages && (
           <Button loadMore={loadMore} />
         )}

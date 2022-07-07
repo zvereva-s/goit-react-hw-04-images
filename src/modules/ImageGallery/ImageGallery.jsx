@@ -3,7 +3,7 @@ import ImageGalleryItem from 'modules/ImageGallery/ImageGalleryItem';
 import styles from './imageGallery.module.css';
 
 function ImageGallery({items, onClick}) {
-    const images = items.map(({ id, webformatURL, tags }) => <ImageGalleryItem key={id} url={webformatURL} tags={tags} onClick={()=>onClick(id)} />)
+    const images = items.map(({ id, webformatURL, tags, largeImageURL }) => <ImageGalleryItem key={id} url={webformatURL} tags={tags} onClick={onClick} largeImageURL={largeImageURL} />)
     
     return (
         <ul className={styles.ImageGallery}>
@@ -20,6 +20,7 @@ ImageGallery.propTypes = {
         PropTypes.shape({
             id: PropTypes.number.isRequired,
             webformatURL: PropTypes.string.isRequired,
+            largeImageURL: PropTypes.string.isRequired,
             tags: PropTypes.string, 
         })
     ),
