@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect, useRef,useCallback } from 'react';
 
 import SearchForm from './SearchForm';
 import ImageGallery from 'modules/ImageGallery';
@@ -6,120 +6,99 @@ import Loader from 'shared/components/Loader';
 import Button from 'modules/Button';
 import Modal from 'shared/components/Modal';
 
-import { getImagesList} from 'shared/services/api/getImages';
+import { getImagesList } from 'shared/services/api/getImages';
 
-class Searchbar extends Component {
-  state = {
-    items: [],
-    query: '',
-    page: 1,
-    totalPages: 0,
-    showModal: false,
-    modalContent:{},
-    error: false,
-    loading: false,
-  };
+function Searchbar() {
+  const [items, setItems] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { page, query} = this.state;
-    if (query !== prevState.query) {
-      this.fetchProductsList();
-    }
-    if (page > prevState.page) {
-      this.fetchProductsList();
-    }
-  }
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  async fetchProductsList() {
-    const { query, page } = this.state;
-    this.setState({
-      loading: true,
-      error: false,
-    });
-    try {
-      const { data } = await getImagesList(query, page);
-      const { totalHits, hits } = data;
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({});
+  
+  const firstRender = useRef(true);
 
-      this.setState(prevState => {
-        if (page === 1) {
-          return {
-            items: [...hits],
-            totalPages: totalHits,
-          };
-        }
-        return {
-          items: [...prevState.items, ...hits],
-          totalPages: totalHits,
-        };
-      });
-    } catch (error) {
-      this.setState({
-        error: true,
-      });
-    } finally {
-      this.setState({ loading: false });
-    }
-  }
+  useEffect(() => {
+    async function fetchProductsList() {
+      setLoading(true);
+      setError(false);
 
-  setQuery = ({ query }) => {
-    this.setState(prevState => {
-      if (prevState.query !== query) {
-        return {
-          query,
-          page: 1,
-          items: [],
-        };
+      try {
+        const { data } = await getImagesList(query, page);
+        const { totalHits, hits } = data;
+
+          if (page === 1) {
+            setItems(hits);
+            setTotal(totalHits);
+          }
+          setItems(prevState => ([...prevState, ...hits]));
+          setTotal(totalHits);
+          
       }
-    });
-  }
-
-  loadMore = () => {
-    this.setState(({ page }) => {
-      return {
-        page: page + 1,
-      };
-    });
-  };
-
-  getImgObj = ({largeImageURL, tags}) => {
+      catch (error) {
+        setError(true);
+      }
+      finally {
+        setLoading(false);
+      }
+    }
+    // query && fetchProductsList();
+    if (!firstRender.current) {
+      fetchProductsList();
+    }
+    else {
+      firstRender.current = false;
+    }
     
-    this.setState({
-      showModal: true,
-      modalContent: {largeImageURL, tags},
+  }, [page, query])
+  
+
+  const setSearchQuery = useCallback(({ query }) => {
+    setQuery(prevState => {
+      if (prevState.query !== query) {
+        setPage(1);
+        setItems([]);
+        return query
+      }
     })
+  }, [setItems])
+
+  function loadMore() {
+    setPage(page + 1);
   }
+  const getImgObj = useCallback(({ largeImageURL, tags }) =>
+  {
+    setModalOpen(true);
+    setModalContent({ largeImageURL, tags })   
+  }, [setModalContent])
 
-  closeModal = () => {
-    this.setState({
-      showModal: false,
-    });
-  };
-
-  render() {
-    const { items, error, loading, showModal, modalContent, totalPages, page } =
-      this.state;
-    const { largeImageURL, tags } = modalContent;
-    const { closeModal, setQuery,  loadMore, getImgObj } = this;
-
-    return (
-      <>
-        {showModal && 
-          <Modal closeModal={closeModal}>
-            <img src={largeImageURL} alt={tags} width="900"/>
-          </Modal>
-        }
-
-        <SearchForm onSubmit={setQuery} />
-        {error && <p>Не удалось загрузить посты</p>}
-        {loading && <Loader />}
-
-        <ImageGallery items={items} onClick={getImgObj} />
-        {!loading && items.length >= 12 && page * 12 <= totalPages && (
-          <Button loadMore={loadMore} />
-        )}
-      </>
-    );
+  function closeModal() {
+    setModalOpen(false);
   }
+    
+  const { largeImageURL, tags } = modalContent;
+  return(
+    <>
+      {modalOpen && (
+        <Modal closeModal={closeModal}>
+          <img src={largeImageURL} alt={tags} width="900" />
+        </Modal>
+      )}
+
+      <SearchForm onSubmit={setSearchQuery} />
+      {error && <p>Не удалось загрузить посты</p>}
+      {loading && <Loader />}
+
+      <ImageGallery items={items} onClick={getImgObj} />
+      {!loading && items.length >= 12 && page * 12 <= total && (
+        <Button loadMore={loadMore} />
+      )}
+    </>
+  );
 }
 
 export default Searchbar;
