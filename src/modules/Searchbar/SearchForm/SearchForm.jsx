@@ -8,8 +8,8 @@ import PropTypes from 'prop-types';
 import styles from './searchForm.module.css';
 
 function SearchForm({onSubmit}) {
-  const { formState, handleChange, handleSubmit, isReset = false } = useForm({ initialStateForm, onSubmit });
-  
+  const { formState, handleChange, handleSubmit} = useForm({ initialStateForm, onSubmit });
+
   const { query } = formState;
   return (
     <header className={styles.Searchbar}>
@@ -33,7 +33,8 @@ function SearchForm({onSubmit}) {
 }
 
 SearchForm.defaultProps = {
-  onSubmit: () => {},
+  onSubmit: () => { },
+  isReset: false,
 };
 SearchForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
