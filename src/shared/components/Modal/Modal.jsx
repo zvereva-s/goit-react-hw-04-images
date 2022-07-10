@@ -9,12 +9,12 @@ function Modal({ closeModal, children }) {
   
   useEffect(() => {
     window.addEventListener("keydown", handleClose);
-  }, []);
+  }, [handleClose]);
   useEffect(() => {
     return () => {
       window.removeEventListener("keydown", handleClose);
     };
-  }, []);
+  }, [handleClose]);
 
   function handleClose(e) {
     if (e.target === e.currentTarget) {
